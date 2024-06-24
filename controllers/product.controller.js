@@ -1,12 +1,18 @@
-const fs = require("fs");
-
-const PRODUCTS = require("../data/products.json");
-
-function getProducts(req, res) {
-  res.status(200).json(PRODUCTS);
+const Product = require("../Models/product.model");
+async function getProducts(req, res) {
+  try {
+    const name = req.query.name || "";
+    const products = await Product.find({
+      name: { $regex: name, $options: "i" }, // "i" for case-insensitive
+    });
+    res.status(200).json(products);
+  } catch (err) {
+    res.status(500).json(err);
+    // if(err.status === 404)
+  }
 }
 
-function getProductById(req, res) {
+async function getProductById(req, res) {
   const { id } = req.params;
   const product = PRODUCTS.find((product) => product._id === id);
   if (!product) {
@@ -15,7 +21,7 @@ function getProductById(req, res) {
   res.status(200).json(product);
 }
 
-function deleteProduct(req, res) {
+async function deleteProduct(req, res) {
   const { id } = req.params;
   const products = [...PRODUCTS];
   const productIndex = products.findIndex((product) => product._id === id);
@@ -27,18 +33,18 @@ function deleteProduct(req, res) {
   res.status(200).json({ message: "Product deleted successfully" });
 }
 
-function createProduct(req, res) {
+async function createProduct(req, res) {
   const newProduct = req.body;
   const products = [...PRODUCTS, newProduct];
   fs.writeFileSync("./data/products.json", JSON.stringify(products));
   res.status(201).json({ message: "Product added successfully!" });
 }
 
-function editProduct(req, res) {
+async function editProduct(req, res) {
   const { id } = req.params;
   const products = PRODUCTS.map((product) => {
     if (product._id === id) {
-      return { product, ...req.body };
+      return { ...product, ...req.body };
     }
     return product;
   });
