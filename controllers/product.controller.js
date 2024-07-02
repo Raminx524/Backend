@@ -1,4 +1,5 @@
 const Product = require("../Models/product.model");
+const User = require("../Models/user.model");
 const { buildCritiria } = require("../helpers/product.helper");
 
 async function getProductsCount(req, res) {
@@ -62,6 +63,7 @@ async function deleteProduct(req, res) {
   const { id } = req.params;
   try {
     const deletedProduct = await Product.findByIdAndDelete(id);
+    await User.findByIdAndUpdate(req.userId, { $pull: { products: id } });
     res.json({ message: "Product deleted" });
   } catch (err) {
     if (err.name === "CastError") {
@@ -81,8 +83,12 @@ async function deleteProduct(req, res) {
 
 async function createProduct(req, res) {
   try {
-    const newProduct = new Product(req.body);
+    const productToAdd = { ...req.body, user: req.userId };
+    const newProduct = new Product(productToAdd);
     const savedProduct = await newProduct.save();
+    await User.findByIdAndUpdate(req.userId, {
+      $push: { products: savedProduct._id },
+    });
     res.status(201).json(savedProduct);
   } catch (err) {
     if (err.name === "ValidationError") {

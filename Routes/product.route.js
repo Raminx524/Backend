@@ -1,4 +1,8 @@
 const express = require("express");
+const {
+  verifyToken,
+  authorizeUser,
+} = require("../middlewares/auth.middleware");
 
 const {
   getProductsCount,
@@ -13,8 +17,8 @@ const router = express.Router();
 router.get("/count", getProductsCount);
 router.get("/", getProducts);
 router.get("/:id", getProductById);
-router.delete("/:id", deleteProduct);
-router.post("/", createProduct);
-router.patch("/:id", editProduct);
+router.delete("/:id", verifyToken, authorizeUser, deleteProduct);
+router.post("/", verifyToken, createProduct);
+router.patch("/:id", verifyToken, authorizeUser, editProduct);
 
 module.exports = router;
